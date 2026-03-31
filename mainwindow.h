@@ -2,6 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFutureWatcher>
+
+#include "camera.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,5 +26,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QFutureWatcher<QImage> watcher;
+    camera cam;
 };
 #endif // MAINWINDOW_H

@@ -4,26 +4,34 @@
 #include "hittable.h"
 #include <QImage>
 #include <QLabel>
-#include <QThread>
+#include <QObject>
 
-class camera{
+class camera : public QObject{
+    Q_OBJECT
 public:
     double aspect_ratio = 16.0 / 9.0;
     int width = 720;
-    int height;
+    int height = 405;
     int sample_count = 10;
+    int max_bounces = 10;
 
     camera(double ar, int w): aspect_ratio(ar), width(w) {}
     camera(){}
 
-    QImage render(const hittable& world, QLabel*& status){
+signals:
+    void statusMessage(QString msg);
+
+public:
+
+    QImage render(const hittable& world){
         initialize();
 
-        status->setText("Working...");
+        emit statusMessage("Rendering...");
 
         QImage image(width, height, QImage::Format_RGB32);
 
         for (int y = 0; y < image.height(); ++y) {
+            emit statusMessage("Rendering line " + QString::number(y) + " out of " + QString::number(image.height()));
             // Get a pointer to the start of this row for speed
             QRgb *line = reinterpret_cast<QRgb*>(image.scanLine(y));
 
@@ -31,13 +39,13 @@ public:
                 color pixel_color(0,0,0);
                 for(int sample = 0; sample < sample_count; sample++){
                     ray r = get_ray(x, y);
-                    pixel_color += ray_color(r, world);
+                    pixel_color += ray_color(r, max_bounces, world);
                 }
                 line[x] = color_to_q(pixel_color * pixel_ss);
             }
         }
 
-        status->setText("Done.");
+        emit statusMessage("Done.");
 
         return image;
     }
@@ -74,10 +82,14 @@ private:
         fpixel_loc = viewport_upper_left + 0.5*(pixel_delta_u + pixel_delta_v);
     }
 
-    color ray_color(const ray& r, const hittable& world){
+    color ray_color(const ray& r, int depth, const hittable& world){
+        if (depth <= 0)
+            return color(0,0,0);
+
         hit_record rec;
         if(world.hit(r, interval(0, infinity), rec)){
-            return 0.5 * (rec.normal + color(1, 1, 1));
+            vec3 direction = random_on_hemisphere(rec.normal);
+            return 0.5 * ray_color(ray(rec.p, direction), depth-1, world);
         }
         vec3 unit_dir = unit_vector(r.direction());
         auto a = 0.5*(unit_dir.y() + 1.0);
