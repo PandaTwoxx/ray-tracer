@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
+#include "ui_mainwindow.h"
 #include <QImage>
 #include <QColor>
 #include <QtConcurrent/QtConcurrent>
@@ -16,6 +16,21 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    connect(&cam, &camera::statusMessage, this, [this](QString y) {
+        ui->status->setText(y);
+        ui->canvas->update();
+    });
+
+    connect(&watcher, &QFutureWatcher<QImage>::finished, this, [this]() {
+        QImage result = watcher.result();
+        if (!result.isNull()) {
+            ui->canvas->setFixedSize(result.width(), result.height());
+            ui->canvas->setPixmap(QPixmap::fromImage(result));
+            ui->canvas->update();
+        }
+        ui->status->setText("Done!");
+    });
 }
 
 MainWindow::~MainWindow()
@@ -32,20 +47,10 @@ void MainWindow::renderCanvas(){
 
     cam.sample_count = 20;
 
-    connect(&cam, &camera::statusMessage, this, [this](QString y) {
-        ui->status->setText(y);
-    });
-
-    connect(&watcher, &QFutureWatcher<QImage>::finished, this, [this]() {
-        QImage result = watcher.result();
-        ui->canvas->setFixedSize(result.width(), result.height());
-        ui->canvas->setPixmap(QPixmap::fromImage(result));
-        ui->status->setText("Done!");
-    });
-
     QFuture<QImage> future = QtConcurrent::run([this, world]() {
         return cam.render(world);
     });
+    watcher.setFuture(future);
 }
 
 void MainWindow::on_pushButton_clicked()
