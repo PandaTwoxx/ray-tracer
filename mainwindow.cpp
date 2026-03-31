@@ -13,7 +13,12 @@ color ray_color(const ray& r){
 }
 
 QRgb color_to_q(const color& c){
-    return qRgb(c.x(), c.y(), c.z());
+    // Scale 0.0-1.0 to 0-255
+    int r = static_cast<int>(255.999 * c.x());
+    int g = static_cast<int>(255.999 * c.y());
+    int b = static_cast<int>(255.999 * c.z());
+
+    return qRgb(r, g, b);
 }
 
 MainWindow::MainWindow(QWidget *parent)
