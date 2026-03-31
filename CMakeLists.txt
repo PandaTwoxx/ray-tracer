@@ -25,6 +25,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         vec3.h
         ray.h
+        hittable.h
+        sphere.h
+        hittable_list.h
+        rt.h
+        interval.h
+        camera.h
 
     )
 # Define target properties for Android with Qt 6 as:
