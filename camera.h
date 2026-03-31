@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include "hittable.h"
+#include "material.h"
 #include <QImage>
 #include <QLabel>
 #include <QObject>
@@ -88,8 +89,11 @@ private:
 
         hit_record rec;
         if(world.hit(r, interval(0.001, infinity), rec)){
-            vec3 direction = random_on_hemisphere(rec.normal);
-            return 0.5 * ray_color(ray(rec.p, direction), depth-1, world);
+            ray scattered;
+            color attenuation;
+            if(rec.mat->scatter(r, rec, attenuation, scattered))
+                return attenuation * ray_color(scattered, depth - 1, world);
+            return color(0,0,0);
         }
         vec3 unit_dir = unit_vector(r.direction());
         auto a = 0.5*(unit_dir.y() + 1.0);
@@ -99,11 +103,18 @@ private:
     QRgb color_to_q(const color& c){
         // Scale 0.0-1.0 to 0-255
         static const interval intensity(0.000, 0.999);
-        int r = int(256 * intensity.clamp(c.x()));
-        int g = int(256 * intensity.clamp(c.y()));
-        int b = int(256 * intensity.clamp(c.z()));
+        int r = int(256 * intensity.clamp(linear_to_gamma(c.x())));
+        int g = int(256 * intensity.clamp(linear_to_gamma(c.y())));
+        int b = int(256 * intensity.clamp(linear_to_gamma(c.z())));
 
         return qRgb(r, g, b);
+    }
+    double linear_to_gamma(double linear_component)
+    {
+        if (linear_component > 0)
+            return std::sqrt(linear_component);
+
+        return 0;
     }
 
     ray get_ray(int i, int j) const {

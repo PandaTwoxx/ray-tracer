@@ -31,6 +31,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(canvas
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        material.h
     )
 else()
     if(ANDROID)
