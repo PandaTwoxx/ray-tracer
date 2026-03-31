@@ -25,6 +25,7 @@ set(PROJECT_SOURCES
         vec3.h
         ray.h
         interval.h
+        material.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
