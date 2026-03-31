@@ -3,6 +3,19 @@
 #include <QImage>
 #include <QColor>
 
+#include "ray.h"
+#include "vec3.h"
+
+color ray_color(const ray& r){
+    vec3 unit_dir = unit_vector(r.direction());
+    auto a = 0.5*(unit_dir.y() + 1.0);
+    return (1.0 - a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
+}
+
+QRgb color_to_q(const color& c){
+    return qRgb(c.x(), c.y(), c.z());
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -26,9 +39,23 @@ void MainWindow::renderCanvas(){
 
     ui->canvas->setFixedSize(width, height);
 
-    // calculate viewport size
+    // calculate viewport size and camera
+    auto focal_length = 1.0;
     auto viewport_height = 2.0;
     auto viewport_width = viewport_height * (double(width)/height);
+    auto camera_center = vec3(0, 0, 0);
+
+    // calculate vectors for viewport edges
+    auto viewport_u = vec3(viewport_width, 0, 0);
+    auto viewport_v = vec3(0, -viewport_height, 0);
+
+    // calculate delta vectors for pixel to pixel
+    auto pixel_delta_u = viewport_u / width;
+    auto pixel_delta_v = viewport_v / height;
+
+    // calculate topleft pixel location
+    auto viewport_upper_left = camera_center - vec3(0, 0, focal_length) - viewport_u/2 - viewport_v/2;
+    auto fpixel_loc = viewport_upper_left + 0.5*(pixel_delta_u + pixel_delta_v);
 
 
     QImage image(width, height, QImage::Format_RGB32);
@@ -39,13 +66,16 @@ void MainWindow::renderCanvas(){
         QRgb *line = reinterpret_cast<QRgb*>(image.scanLine(y));
 
         for (int x = 0; x < image.width(); ++x) {
-            // --- YOUR CUSTOM RGB LOGIC HERE ---
-            int r = (x * 255) / image.width();
-            int g = (y * 255) / image.height();
-            int b = 150;
+            // calculate pixel location and the ray from the camera to the pixel
+            auto pixel = fpixel_loc + (x*pixel_delta_u) + (y*pixel_delta_v);
+            auto ray_dir = pixel - camera_center;
+            ray r(camera_center, ray_dir);
+
+            // calculate the final rgb value
+            color pixel_color = ray_color(r);
 
             // Assign the RGB value to the pixel
-            line[x] = qRgb(r, g, b);
+            line[x] = color_to_q(pixel_color);
         }
     }
 
