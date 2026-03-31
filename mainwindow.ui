@@ -22,14 +22,14 @@
      <widget class="QLabel" name="canvas">
       <property name="minimumSize">
        <size>
-        <width>720</width>
-        <height>480</height>
+        <width>0</width>
+        <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>720</width>
-        <height>480</height>
+        <width>100000</width>
+        <height>100000</height>
        </size>
       </property>
       <property name="text">

@@ -17,10 +17,25 @@ MainWindow::~MainWindow()
 
 void MainWindow::renderCanvas(){
     ui->canvas->setText("Rendering...");
-    QImage image(720, 480, QImage::Format_RGB32);
+
+    // calculate canvas size
+    auto aspect_ratio = 16.0 / 9.0;
+    int width = 720;
+    int height = int(width / aspect_ratio);
+    height = (height < 1) ? 1 : height;
+
+    ui->canvas->setFixedSize(width, height);
+
+    // calculate viewport size
+    auto viewport_height = 2.0;
+    auto viewport_width = viewport_height * (double(width)/height);
+
+
+    QImage image(width, height, QImage::Format_RGB32);
 
     for (int y = 0; y < image.height(); ++y) {
         // Get a pointer to the start of this row for speed
+        ui->canvas->setText(QString::number(image.height() - y));
         QRgb *line = reinterpret_cast<QRgb*>(image.scanLine(y));
 
         for (int x = 0; x < image.width(); ++x) {
