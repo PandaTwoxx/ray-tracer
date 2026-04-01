@@ -20,7 +20,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(&cam, &camera::statusMessage, this, [this](QString y) {
         ui->status->setText(y);
-        ui->canvas->update();
+    });
+
+    connect(&cam, &camera::updateImage, this, [this](QImage qi) {
+        ui->canvas->setPixmap(QPixmap::fromImage(qi));
     });
 
     connect(&watcher, &QFutureWatcher<QImage>::finished, this, [this]() {
@@ -84,9 +87,9 @@ void MainWindow::renderCanvas(){
     auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
 
-    cam.aspect_ratio      = 16.0 / 9.0;
+    cam.aspect_ratio = 16.0 / 9.0;
     cam.width       = 720;
-    cam.sample_count = 500;
+    cam.sample_count = 10;
     cam.max_bounces         = 50;
 
     cam.vfov     = 20;
@@ -96,6 +99,10 @@ void MainWindow::renderCanvas(){
 
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
+
+    // DO NOT CHANGE
+    cam.calculateHeight();
+    ui->canvas->setFixedSize(cam.width, cam.height);
 
     QFuture<QImage> future = QtConcurrent::run([this, world]() {
         return cam.render(world);

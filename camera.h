@@ -28,6 +28,7 @@ public:
 
 signals:
     void statusMessage(QString msg);
+    void updateImage(QImage qi);
 
 public:
 
@@ -51,11 +52,17 @@ public:
                 }
                 line[x] = color_to_q(pixel_color * pixel_ss);
             }
+            emit updateImage(image);
         }
 
         emit statusMessage("Done.");
 
         return image;
+    }
+
+    void calculateHeight(){
+        height = int(width / aspect_ratio);
+        height = (height < 1) ? 1 : height;
     }
 private:
     point3 fpixel_loc;
