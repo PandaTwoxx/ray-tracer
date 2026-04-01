@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(canvas VERSION 0.1 LANGUAGES CXX)
+project(ray-tracer VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -29,24 +29,24 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(canvas
+    qt_add_executable(ray-tracer
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         material.h
     )
 else()
     if(ANDROID)
-        add_library(canvas SHARED
+        add_library(ray-tracer SHARED
             ${PROJECT_SOURCES}
         )
     else()
-        add_executable(canvas
+        add_executable(ray-tracer
             ${PROJECT_SOURCES}
         )
     endif()
 endif()
 
-target_link_libraries(canvas PRIVATE 
+target_link_libraries(ray-tracer PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Concurrent
 )
@@ -55,9 +55,9 @@ target_link_libraries(canvas PRIVATE
 # If you are developing for iOS or macOS you should consider setting an
 # explicit, fixed bundle identifier manually though.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.canvas)
+  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.ray-tracer)
 endif()
-set_target_properties(canvas PROPERTIES
+set_target_properties(ray-tracer PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -66,12 +66,12 @@ set_target_properties(canvas PROPERTIES
 )
 
 include(GNUInstallDirs)
-install(TARGETS canvas
+install(TARGETS ray-tracer
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(canvas)
+    qt_finalize_executable(ray-tracer)
 endif()
