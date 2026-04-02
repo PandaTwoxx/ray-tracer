@@ -40,7 +40,9 @@ public:
         QImage image(width, height, QImage::Format_RGB32);
 
         for (int y = 0; y < image.height(); ++y) {
-            emit statusMessage("Rendering line " + QString::number(y) + " out of " + QString::number(image.height()));
+            if (y % 20 == 0 || y == height - 1) {
+                emit statusMessage(QString("Rendering lines %1-%2/%3...").arg(y).arg(y+19).arg(height));
+            }
             // Get a pointer to the start of this row for speed
             QRgb *line = reinterpret_cast<QRgb*>(image.scanLine(y));
 
@@ -49,13 +51,14 @@ public:
                 for(int sample = 0; sample < sample_count; sample++){
                     ray r = get_ray(x, y);
                     pixel_color += ray_color(r, max_bounces, world);
+                    rays_calculated++;
                 }
                 line[x] = color_to_q(pixel_color * pixel_ss);
             }
             emit updateImage(image);
         }
 
-        emit statusMessage("Done.");
+        emit statusMessage("Done. Rendered " + QString::number(rays_calculated) + " rays and " + QString::number(bounces) + " bounces.");
 
         return image;
     }
@@ -73,6 +76,8 @@ private:
     vec3 u, v, w;
     vec3 defocus_disk_u;
     vec3 defocus_disk_v;
+    int rays_calculated = 0;
+    int bounces = 0;
 
     void initialize(){
         // calculate canvas size
@@ -112,6 +117,7 @@ private:
     }
 
     color ray_color(const ray& r, int depth, const hittable& world){
+        bounces++;
         if (depth <= 0)
             return color(0,0,0);
 
@@ -150,7 +156,9 @@ private:
         auto pixel_sample = fpixel_loc + ((i + offset.x()) * pixel_delta_u) + ((j + offset.y()) * pixel_delta_v);
         auto ray_origin = (defocus_angle <= 0) ? camera_center : defocus_disk_sample();
         auto ray_direction = pixel_sample - ray_origin;
-        return ray(ray_origin, ray_direction);
+        auto ray_time = random_double();
+
+        return ray(ray_origin, ray_direction, ray_time);
     }
 
     vec3 sample_square() const {

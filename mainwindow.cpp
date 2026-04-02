@@ -11,6 +11,7 @@
 #include "sphere.h"
 #include "camera.h"
 #include "material.h"
+#include "bvh.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -62,6 +63,8 @@ void MainWindow::renderCanvas(){
                     // diffuse
                     auto albedo = color::random() * color::random();
                     sphere_material = make_shared<lambertian>(albedo);
+                    auto center2 = center + vec3(0, random_double(0, .5), 0);
+                    //world.add(make_shared<sphere>(center, center2, 0.2, sphere_material));
                     world.add(make_shared<sphere>(center, 0.2, sphere_material));
                 } else if (choose_mat < 0.95) {
                     // metal
@@ -87,9 +90,11 @@ void MainWindow::renderCanvas(){
     auto material3 = make_shared<metal>(color(0.7, 0.6, 0.5), 0.0);
     world.add(make_shared<sphere>(point3(4, 1, 0), 1.0, material3));
 
+    world = hittable_list(make_shared<bvh_node>(world));
+
     cam.aspect_ratio = 16.0 / 9.0;
     cam.width       = 720;
-    cam.sample_count = 10;
+    cam.sample_count = 50;
     cam.max_bounces         = 50;
 
     cam.vfov     = 20;
