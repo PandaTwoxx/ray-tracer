@@ -36,10 +36,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         aabb.h
         bvh.h
         texture.h
-
-
-        ../../../../Downloads/earth.jpeg
         assets.qrc
+        images.h
+        perlin.h
 
     )
 else()

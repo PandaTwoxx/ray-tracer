@@ -2,8 +2,9 @@
 #define TEXTURE_H
 
 #include "vec3.h"
-#include "rtw_stb_image.h"
+#include "images.h"
 #include "interval.h"
+#include "perlin.h"
 
 class texture {
 public:
@@ -66,6 +67,20 @@ public:
 
 private:
     rtw_image image;
+};
+
+class noise_texture : public texture {
+public:
+    noise_texture(double scale): scale(scale) {}
+
+    color value(double u, double v, const point3& p) const override{
+        return color(.5, .5, .5) * (1 + std::sin(scale * p.z() + 10 * noise.turb(p, 7)));
+
+    }
+
+private:
+    perlin noise;
+    double scale;
 };
 
 #endif // TEXTURE_H

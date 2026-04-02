@@ -120,15 +120,48 @@ hittable_list checkered_spheres(camera& cam) {
     return world;
 }
 
+hittable_list earth(camera& cam) {
+    auto earth_texture = make_shared<image_texture>("earth.jpeg");
+    auto earth_surface = make_shared<lambertian>(earth_texture);
+    auto globe = make_shared<sphere>(point3(0,0,0), 2, earth_surface);
+
+    cam.vfov     = 20;
+    cam.lookfrom = point3(0,0,12);
+    cam.lookat   = point3(0,0,0);
+    cam.vup      = vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    return hittable_list(globe);
+}
+
+hittable_list perlin_spheres(camera& cam){
+    hittable_list world;
+
+    auto pertext = make_shared<noise_texture>(4);
+    world.add(make_shared<sphere>(point3(0,-1000,0), 1000, make_shared<lambertian>(pertext)));
+    world.add(make_shared<sphere>(point3(0,2,0), 2, make_shared<lambertian>(pertext)));
+
+    cam.vfov     = 20;
+    cam.lookfrom = point3(13,2,3);
+    cam.lookat   = point3(0,0,0);
+    cam.vup      = vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    return world;
+}
 
 void MainWindow::renderCanvas(){
     ui->status->setText("Generating Scene");
 
     hittable_list world;
 
-    switch(2){
+    switch(3){
     case 1: world = bouncing_spheres(cam); break;
     case 2: world = checkered_spheres(cam); break;
+    case 3: world = earth(cam); break;
+    case 4: world = perlin_spheres(cam); break;
     }
 
     cam.aspect_ratio = 16.0 / 9.0;
