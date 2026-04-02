@@ -35,6 +35,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         material.h
         aabb.h
         bvh.h
+        texture.h
+
+
+        ../../../../Downloads/earth.jpeg
+        assets.qrc
+
     )
 else()
     if(ANDROID)

@@ -2,6 +2,7 @@
 #define MATERIAL_H
 
 #include "hittable.h"
+#include "texture.h"
 
 class material {
 public:
@@ -16,7 +17,8 @@ public:
 
 class lambertian : public material {
 public:
-    lambertian(const color& albedo) : albedo(albedo){}
+    lambertian(const color& albedo) : tex(make_shared<solid_color>(albedo)) {}
+    lambertian(shared_ptr<texture> tex) : tex(tex) {}
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const override {
         auto scatter_direction = rec.normal + random_unit_vector();
@@ -26,37 +28,39 @@ public:
         }
 
         scattered = ray(rec.p, scatter_direction, r_in.time());
-        attenuation = albedo;
+        attenuation = tex->value(rec.u, rec.v, rec.p);
         return true;
     }
 
 private:
-    color albedo;
+    shared_ptr<texture> tex;
 };
 
 class metal : public material {
 public:
-    metal(const color& albedo, double fuzz) : albedo(albedo), fuzz(fuzz) {}
+    metal(const color& albedo, double fuzz) : tex(make_shared<solid_color>(albedo)), fuzz(fuzz) {}
+    metal(shared_ptr<texture> tex, double fuzz) : tex(tex), fuzz(fuzz) {}
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const override {
         vec3 reflected = reflect(r_in.direction(), rec.normal);
         reflected = unit_vector(reflected) + (fuzz * random_unit_vector());
         scattered = ray(rec.p, reflected, r_in.time());
-        attenuation = albedo;
+        attenuation = tex->value(rec.u, rec.v, rec.p);
         return (dot(scattered.direction(), rec.normal) > 0);
     }
 private:
-    color albedo;
+    shared_ptr<texture> tex;
     double fuzz;
 };
 
 class dielectric : public material {
 public:
-    dielectric(double refraction_index) : refraction_index(refraction_index), albedo(color(1.0, 1.0, 1.0)){}
-    dielectric(double refraction_index, color albedo) : refraction_index(refraction_index), albedo(albedo){}
+    dielectric(double refraction_index) : refraction_index(refraction_index), tex(make_shared<solid_color>(color(1.0, 1.0, 1.0))){}
+    dielectric(double refraction_index, color albedo) : refraction_index(refraction_index), tex(make_shared<solid_color>(albedo)){}
+    dielectric(double refraction_index, shared_ptr<texture> tex) : refraction_index(refraction_index), tex(tex){}
 
     bool scatter(const ray& r_in, const hit_record& rec, color& attenuation, ray& scattered) const override {
-        attenuation = albedo;
+        attenuation = tex->value(rec.u, rec.v, rec.p);
         double ri = rec.front_face ? (1.0/refraction_index) : refraction_index;
 
         vec3 unit_direction = unit_vector(r_in.direction());
@@ -77,7 +81,7 @@ public:
 
 private:
     double refraction_index;
-    color albedo;
+    shared_ptr<texture> tex;
 
     static double reflectance(double cosine, double refraction_index) {
         // Use Schlick's approximation for reflectance.
