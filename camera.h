@@ -6,6 +6,9 @@
 #include <QImage>
 #include <QLabel>
 #include <QObject>
+#include <thread>
+#include <vector>
+#include <atomic>
 
 class camera : public QObject{
     Q_OBJECT
@@ -23,6 +26,7 @@ public:
 
     double defocus_angle = 0;
     double focus_dist = 10;
+    int thread_count = 1;
 
     camera(double ar, int w): aspect_ratio(ar), width(w) {}
     camera(){}
@@ -39,27 +43,55 @@ public:
         emit statusMessage("Rendering...");
 
         QImage image(width, height, QImage::Format_RGB32);
+        image.fill(Qt::black);
+        rays_calculated = 0;
+        bounces = 0;
 
-        for (int y = 0; y < image.height(); ++y) {
-            if (y % 20 == 0 || y == height - 1) {
-                emit statusMessage(QString("Rendering lines %1-%2/%3...").arg(y).arg(std::min(y+19, height)).arg(height));
-            }
-            // Get a pointer to the start of this row for speed
-            QRgb *line = reinterpret_cast<QRgb*>(image.scanLine(y));
+        int threads_to_use = thread_count > 0 ? thread_count : 1;
+        std::vector<std::thread> threads;
+        std::atomic<int> rows_completed(0);
 
-            for (int x = 0; x < image.width(); ++x) {
-                color pixel_color(0,0,0);
-                for(int sample = 0; sample < sample_count; sample++){
-                    ray r = get_ray(x, y);
-                    pixel_color += ray_color(r, max_bounces, world);
-                    rays_calculated++;
+        uchar* bits = image.bits();
+        int bpl = image.bytesPerLine();
+
+        auto renderRows = [&](int start_y, int end_y) {
+            for (int y = start_y; y < end_y; ++y) {
+                QRgb *line = reinterpret_cast<QRgb*>(bits + y * bpl);
+                int local_rays = 0;
+
+                for (int x = 0; x < width; ++x) {
+                    color pixel_color(0,0,0);
+                    for(int sample = 0; sample < sample_count; sample++){
+                        ray r = get_ray(x, y);
+                        pixel_color += ray_color(r, max_bounces, world);
+                        local_rays++;
+                    }
+                    line[x] = color_to_q(pixel_color * pixel_ss);
                 }
-                line[x] = color_to_q(pixel_color * pixel_ss);
+                
+                rays_calculated += local_rays;
+                rows_completed++;
+                int finished = rows_completed.load();
+                if (finished % 20 == 0 || finished == height) {
+                    emit statusMessage(QString("Rendering... %1/%2 lines completed").arg(finished).arg(height));
+                    emit updateImage(image.copy());
+                }
             }
-            emit updateImage(image);
+        };
+
+        int rows_per_thread = height / threads_to_use;
+        for (int i = 0; i < threads_to_use; ++i) {
+            int start = i * rows_per_thread;
+            int end = (i == threads_to_use - 1) ? height : start + rows_per_thread;
+            threads.emplace_back(renderRows, start, end);
         }
 
-        emit statusMessage("Done. Rendered " + QString::number(rays_calculated) + " rays and " + QString::number(bounces) + " bounces.");
+        for (auto& t : threads) {
+            t.join();
+        }
+
+        emit updateImage(image.copy());
+        emit statusMessage("Done. Rendered " + QString::number(rays_calculated.load()) + " rays and " + QString::number(bounces.load()) + " bounces.");
 
         return image;
     }
@@ -77,8 +109,8 @@ private:
     vec3 u, v, w;
     vec3 defocus_disk_u;
     vec3 defocus_disk_v;
-    int rays_calculated = 0;
-    int bounces = 0;
+    std::atomic<int> rays_calculated{0};
+    std::atomic<int> bounces{0};
 
     void initialize(){
         // calculate canvas size

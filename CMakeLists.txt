@@ -36,11 +36,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         aabb.h
         bvh.h
         texture.h
-        assets.qrc
+
         images.h
         perlin.h
         quad.h
         constant_medium.h
+        assets.qrc
 
     )
 else()
