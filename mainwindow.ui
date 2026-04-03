@@ -69,6 +69,30 @@
       </property>
      </widget>
     </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLineEdit" name="sample_count">
+        <property name="text">
+         <string>50</string>
+        </property>
+        <property name="placeholderText">
+         <string>Samples Per Pixel</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="width">
+        <property name="text">
+         <string>720</string>
+        </property>
+        <property name="placeholderText">
+         <string>Width</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

@@ -39,6 +39,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         assets.qrc
         images.h
         perlin.h
+        quad.h
+        constant_medium.h
 
     )
 else()

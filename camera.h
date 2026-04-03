@@ -19,6 +19,7 @@ public:
     point3 lookfrom = point3(0, 0, 0);
     point3 lookat = point3(0, 0, -1);
     vec3 vup = vec3(0, 1, 0);
+    color background;
 
     double defocus_angle = 0;
     double focus_dist = 10;
@@ -41,7 +42,7 @@ public:
 
         for (int y = 0; y < image.height(); ++y) {
             if (y % 20 == 0 || y == height - 1) {
-                emit statusMessage(QString("Rendering lines %1-%2/%3...").arg(y).arg(y+19).arg(height));
+                emit statusMessage(QString("Rendering lines %1-%2/%3...").arg(y).arg(std::min(y+19, height)).arg(height));
             }
             // Get a pointer to the start of this row for speed
             QRgb *line = reinterpret_cast<QRgb*>(image.scanLine(y));
@@ -122,16 +123,21 @@ private:
             return color(0,0,0);
 
         hit_record rec;
-        if(world.hit(r, interval(0.001, infinity), rec)){
-            ray scattered;
-            color attenuation;
-            if(rec.mat->scatter(r, rec, attenuation, scattered))
-                return attenuation * ray_color(scattered, depth - 1, world);
-            return color(0,0,0);
+
+        if(!world.hit(r, interval(0.001, infinity), rec)){
+            return background;
         }
-        vec3 unit_dir = unit_vector(r.direction());
-        auto a = 0.5*(unit_dir.y() + 1.0);
-        return (1.0 - a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
+
+        ray scattered;
+        color attenuation;
+        color color_from_emission = rec.mat->emitted(rec.u, rec.v, rec.p);
+
+        if (!rec.mat->scatter(r, rec, attenuation, scattered))
+            return color_from_emission;
+
+        color color_from_scatter = attenuation * ray_color(scattered, depth-1, world);
+
+        return color_from_emission + color_from_scatter;
     }
 
     QRgb color_to_q(const color& c){
