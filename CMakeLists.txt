@@ -12,6 +12,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Concurrent)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Concurrent)
 
+if(APPLE)
+    # The name of the file inside the Bundle's Resources folder
+    set(MACOSX_BUNDLE_ICON_FILE icon.icns)
+
+    # The actual path to the file on your disk
+    set(APP_ICON_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/icon.icns")
+
+    # Tell CMake to copy this file into the App Bundle's Resources folder
+    set_source_files_properties(${APP_ICON_RESOURCE} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources")
+endif()
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp
@@ -36,7 +47,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         aabb.h
         bvh.h
         texture.h
-
+        ${APP_ICON_RESOURCE}
         images.h
         perlin.h
         quad.h
